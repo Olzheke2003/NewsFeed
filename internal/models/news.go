@@ -18,12 +18,12 @@ type News struct {
 }
 
 type Comments struct {
-	ID       int       `json:"id"`
-	NewsID   News      `json:"news_id"`
-	ParentID *int      `json:"parent_id"`
-	UserID   Users     `json:"user_id"`
-	Content  string    `json:"content"`
-	DatePost string    `json:"date_post"`
-	Replies  []Comment `json:"replies"`
-	Likes    int       `json:likes`
+	ID       int        `json:"id"`
+	NewsID   News       `json:"news_id"`
+	ParentID *int       `json:"parent_id"`
+	UserID   Users      `json:"user_id"`
+	Content  string     `json:"content"`
+	DatePost string     `json:"date_post"`
+	Replies  []Comments `json:"replies"`
+	Likes    int        `json:likes`
 }
