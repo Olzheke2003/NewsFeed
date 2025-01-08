@@ -1,12 +1,15 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/Olzheke2003/NewsFeed/internal/config"
 	"github.com/gorilla/mux"
+
+	_ "github.com/lib/pq"
 )
 
 type Server struct {
@@ -25,6 +28,15 @@ func NewServer(cfg *config.ServerConfig) *Server {
 }
 
 func (s *Server) Run() error {
+	db, err := sql.Open("postgres", s.config.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	if err := db.Ping(); err != nil {
+		return err
+	}
+	defer db.Close()
+
 	s.logger.Println("Starting server on", s.config.BindAddr)
 	s.setupRoutes()
 	return http.ListenAndServe(s.config.BindAddr, s.router)
