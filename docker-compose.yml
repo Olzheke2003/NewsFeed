@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15   # Укажите нужную версию PostgreSQL
+    container_name: my_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: myuser        # Укажите имя пользователя
+      POSTGRES_PASSWORD: mypassword  # Укажите пароль
+      POSTGRES_DB: mydatabase      # Укажите имя базы данных
+    ports:
+      - "5432:5432"                # Пробрасываем порт PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Персистентное хранилище
+
+volumes:
+  postgres_data:
