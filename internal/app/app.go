@@ -2,13 +2,20 @@ package app
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/Olzheke2003/NewsFeed/internal/config"
-	"github.com/gorilla/mux"
+	_ "github.com/Olzheke2003/NewsFeed/docs"
 
+	"github.com/Olzheke2003/NewsFeed/internal/config"
+	"github.com/Olzheke2003/NewsFeed/internal/database/NewsRepository"
+	"github.com/Olzheke2003/NewsFeed/internal/services"
+	rest "github.com/Olzheke2003/NewsFeed/internal/transport/rest" // Правильный импорт rest
+
+	// Импортируйте ваш сгенерированный Swagger файл
+	"github.com/swaggo/http-swagger" // Импортируйте этот пакет
+
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
@@ -38,12 +45,21 @@ func (s *Server) Run() error {
 	defer db.Close()
 
 	s.logger.Println("Starting server on", s.config.BindAddr)
-	s.setupRoutes()
+	s.setupRoutes(db)
 	return http.ListenAndServe(s.config.BindAddr, s.router)
 }
 
-func (s *Server) setupRoutes() {
-	s.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Welcome to NewsFeed!")
-	}).Methods("GET")
+func (s *Server) setupRoutes(db *sql.DB) {
+	// Создаем экземпляр репозитория, передаем подключение к базе данных
+	newsRepo := database.NewNewsRepository(db)
+
+	// Создаем экземпляр сервиса
+	newsService := services.NewNewsService(newsRepo)
+
+	// Создаем экземпляр хэндлера с использованием rest
+	newsHandler := rest.NewNewsHandler(newsService)
+
+	// Регистрируем маршрут
+	s.router.HandleFunc("/news/comments", newsHandler.GetNewsWithCommentsHandler).Methods("GET")
+	s.router.HandleFunc("/swagger/{any:.*}", httpSwagger.WrapHandler) // Путь для Swagger UI
 }
