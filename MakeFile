@@ -7,3 +7,8 @@ test:
 	go test -v -race -timeout 30s ./...
 
 .DEFAULT_GOAL := build
+
+
+.PHONY: migrate
+migrate:
+	migrate -database "postgres://myuser:mypassword@localhost:5432/mydatabase?sslmode=disable" -path ./migrations up

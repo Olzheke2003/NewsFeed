@@ -34,10 +34,19 @@ func (r *NewsRepository) GetAllNews() ([]models.News, error) {
 	return news, nil
 }
 
+func (r *NewNewsRepository) GetNews(news_id int) (models.News, error) {
+	var news models.News
+	err := r.DB.Query("SELECT title, created_at, content, image FROM news WHERE news_id = $1", news_id).Scan(news)
+	if err != nil {
+		return 0, error
+	}
+	return news, nil
+}
+
 // Подсчитать количество комментариев для новости
-func (r *NewsRepository) CountComments(newsID int) (int, error) {
+func (r *NewsRepository) CountComments(Title string) (int, error) {
 	var count int
-	err := r.DB.QueryRow("SELECT COUNT(*) FROM comments WHERE news_id = $1", newsID).Scan(&count)
+	err := r.DB.QueryRow("SELECT COUNT(*) FROM comments WHERE news_id = (SELECT id FROM news WHERE title = $1)", Title).Scan(&count)
 	if err != nil {
 		return 0, err
 	}

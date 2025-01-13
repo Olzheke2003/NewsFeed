@@ -22,7 +22,7 @@ func (s *NewsService) GetNewsWithComments() ([]models.NewsWithComments, error) {
 
 	var result []models.NewsWithComments
 	for _, n := range news {
-		count, err := s.repo.CountComments(n.ID)
+		count, err := s.repo.CountComments(n.Title)
 		if err != nil {
 			return nil, err
 		}
