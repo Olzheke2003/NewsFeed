@@ -8,12 +8,12 @@ import (
 	_ "github.com/Olzheke2003/NewsFeed/docs"
 
 	"github.com/Olzheke2003/NewsFeed/internal/config"
-	"github.com/Olzheke2003/NewsFeed/internal/database/NewsRepository"
+	database "github.com/Olzheke2003/NewsFeed/internal/database/NewsRepository"
 	"github.com/Olzheke2003/NewsFeed/internal/services"
 	rest "github.com/Olzheke2003/NewsFeed/internal/transport/rest" // Правильный импорт rest
 
 	// Импортируйте ваш сгенерированный Swagger файл
-	"github.com/swaggo/http-swagger" // Импортируйте этот пакет
+	httpSwagger "github.com/swaggo/http-swagger" // Импортируйте этот пакет
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -61,5 +61,6 @@ func (s *Server) setupRoutes(db *sql.DB) {
 
 	// Регистрируем маршрут
 	s.router.HandleFunc("/news/comments", newsHandler.GetNewsWithCommentsHandler).Methods("GET")
+	s.router.HandleFunc("/news/{id}", newsHandler.GetNewsHandler).Methods("GET")
 	s.router.HandleFunc("/swagger/{any:.*}", httpSwagger.WrapHandler) // Путь для Swagger UI
 }

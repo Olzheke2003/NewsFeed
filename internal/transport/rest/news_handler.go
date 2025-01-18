@@ -1,10 +1,14 @@
 package transport
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Olzheke2003/NewsFeed/internal/services"
+	"github.com/gorilla/mux"
 )
 
 type NewsHandler struct {
@@ -31,6 +35,46 @@ func (h *NewsHandler) GetNewsWithCommentsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(news)
+}
+
+// GetNewsHandler возвращает одну новость по ID.
+// @Summary Get news by ID
+// @Description Get a single news item by its ID
+// @Tags news
+// @Accept json
+// @Produce json
+// @Param id path int true "News ID"
+// @Success 200 {object} models.News
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /news/{id} [get]
+func (h *NewsHandler) GetNewsHandler(w http.ResponseWriter, r *http.Request) {
+	// Извлекаем ID из URL
+	vars := mux.Vars(r) // Используется для работы с gorilla/mux
+	newsIDParam := vars["id"]
+
+	// Преобразуем ID из строки в int
+	newsID, err := strconv.Atoi(newsIDParam)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid news ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Получаем новость из сервиса
+	news, err := h.service.GetNews_ID(newsID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, `{"error": "News not found"}`, http.StatusNotFound)
+			return
+		}
+		http.Error(w, `{"error": "Failed to retrieve news"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Отправляем успешный ответ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(news)
 }

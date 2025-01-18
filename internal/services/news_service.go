@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/Olzheke2003/NewsFeed/internal/database/NewsRepository"
+	database "github.com/Olzheke2003/NewsFeed/internal/database/NewsRepository"
 	"github.com/Olzheke2003/NewsFeed/internal/models"
 )
 
@@ -32,4 +32,12 @@ func (s *NewsService) GetNewsWithComments() ([]models.NewsWithComments, error) {
 		})
 	}
 	return result, nil
+}
+
+func (s *NewsService) GetNews_ID(news_id int) (models.News_id, error) {
+	news, err := s.repo.GetNews(news_id)
+	if err != nil {
+		return news, err
+	}
+	return news, nil
 }

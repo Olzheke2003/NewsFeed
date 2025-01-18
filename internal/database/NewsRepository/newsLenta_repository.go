@@ -34,11 +34,15 @@ func (r *NewsRepository) GetAllNews() ([]models.News, error) {
 	return news, nil
 }
 
-func (r *NewNewsRepository) GetNews(news_id int) (models.News, error) {
-	var news models.News
-	err := r.DB.Query("SELECT title, created_at, content, image FROM news WHERE news_id = $1", news_id).Scan(news)
+func (r *NewsRepository) GetNews(newsID int) (models.News_id, error) {
+	var news models.News_id
+	err := r.DB.QueryRow("SELECT id, title, created_at, content, image FROM news WHERE id = $1", newsID).
+		Scan(&news.ID, &news.Title, &news.CreatedAt, &news.Content, &news.Image)
 	if err != nil {
-		return 0, error
+		if err == sql.ErrNoRows {
+			return models.News_id{}, fmt.Errorf("news with id %d not found", newsID)
+		}
+		return models.News_id{}, err
 	}
 	return news, nil
 }
