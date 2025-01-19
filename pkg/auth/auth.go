@@ -3,176 +3,118 @@ package auth
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/Olzheke2003/NewsFeed/internal/models"
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/Olzheke2003/NewsFeed/internal/config" // Путь к вашему пакету конфигурации
+	"github.com/golang-jwt/jwt/v4"
 )
 
-var (
-	ErrDuplicateEmail    = errors.New("email already exists")
-	ErrDuplicateUsername = errors.New("username already exists")
-)
-
-// RegisterRequest - структура для регистрации пользователя
-type RegisterRequest struct {
-	Email    string `json:"email" example:"user@example.com"`
-	Username string `json:"username" example:"john_doe"`
-	Password string `json:"password" example:"securepassword"`
+type AuthHandler struct {
+	cfg *config.ServerConfig
+	db  *sql.DB
 }
 
-// LoginRequest - структура для входа пользователя
-type LoginRequest struct {
-	Email    string `json:"email" example:"user@example.com"`
-	Password string `json:"password" example:"securepassword"`
-}
-
-type AuthService struct {
-	UserRepo *UserRepository
-	Secret   string // Секретный ключ для подписи токенов
-}
-
-// Создание нового AuthService
-func NewAuthService(repo *UserRepository, secret string) *AuthService {
-	return &AuthService{
-		UserRepo: repo,
-		Secret:   secret,
+func NewAuthHandler(cfg *config.ServerConfig, db *sql.DB) *AuthHandler {
+	return &AuthHandler{
+		cfg: cfg,
+		db:  db,
 	}
 }
 
-// Register godoc
+type RegisterRequest struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// RegisterHandler
 // @Summary      Register a new user
-// @Description  Creates a new user account with provided email, username, and password
+// @Description  Creates a new user account with the provided email, username, and password.
 // @Tags         auth
 // @Accept       json
-// @Produce      json
+// @Produce      plain
 // @Param        request body RegisterRequest true "User registration data"
-// @Success      200 {object} map[string]interface{} "User registered successfully"
-// @Failure      400 {object} map[string]string "Invalid request body or missing fields"
-// @Failure      409 {object} map[string]string "Email or username already exists"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Success      201 {string} string "User created successfully"
+// @Failure      400 {string} string "Invalid input"
+// @Failure      500 {string} string "Error hashing password or creating user"
 // @Router       /auth/register [post]
-func (a *AuthService) Register(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
-
-	// Декодируем запрос
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		fmt.Println("Error decoding request:", err) // Логирование ошибки
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	// Проверка обязательных полей
-	if req.Email == "" || req.Username == "" || req.Password == "" {
-		http.Error(w, "Email, username, and password are required", http.StatusBadRequest)
-		return
-	}
-
-	// Хешируем пароль
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := HashPassword(req.Password)
 	if err != nil {
 		http.Error(w, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
 
-	// Создаем пользователя
-	user := &models.Users{
-		Email:     req.Email,
-		Username:  req.Username,
-		Password:  string(hashedPassword),
-		CreatedAt: time.Now(),
-	}
-
-	// Сохраняем пользователя в базу данных
-	if err := a.UserRepo.CreateUser(user); err != nil {
-		if errors.Is(err, ErrDuplicateEmail) || errors.Is(err, ErrDuplicateUsername) {
-			http.Error(w, err.Error(), http.StatusConflict)
-			return
-		}
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+	query := `INSERT INTO users (email, username, password) VALUES ($1, $2, $3)`
+	_, err = h.db.Exec(query, req.Email, req.Username, hashedPassword)
+	if err != nil {
+		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
 
-	// Возвращаем успешный ответ
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "User registered successfully",
-		"user_id": user.ID,
-	})
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("User created successfully"))
 }
 
-// Login godoc
+// LoginHandler
 // @Summary      Login a user
-// @Description  Authenticates a user with email and password and returns a JWT token
+// @Description  Authenticates the user and returns a JWT token upon successful login.
 // @Tags         auth
 // @Accept       json
 // @Produce      json
 // @Param        request body LoginRequest true "User login data"
-// @Success      200 {object} map[string]string "JWT token"
-// @Failure      400 {object} map[string]string "Invalid request body or missing fields"
-// @Failure      401 {object} map[string]string "Invalid email or password"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Success      200 {object} map[string]string "token"
+// @Failure      400 {string} string "Invalid input"
+// @Failure      401 {string} string "Invalid email or password"
+// @Failure      500 {string} string "Database error or error creating token"
 // @Router       /auth/login [post]
-func (a *AuthService) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
-
-	// Декодируем запрос
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	// Проверка обязательных полей
-	if req.Email == "" || req.Password == "" {
-		http.Error(w, "Email and password are required", http.StatusBadRequest)
+	var hashedPassword string
+	var userID int
+	query := `SELECT id, password FROM users WHERE email = $1`
+	err := h.db.QueryRow(query, req.Email).Scan(&userID, &hashedPassword)
+	if err == sql.ErrNoRows {
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	// Получаем пользователя из базы данных по email
-	user, err := a.UserRepo.GetUserByEmail(req.Email)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-			return
-		}
-		fmt.Println("Error fetching user:", err) // Логирование ошибкиPrintln("Error fetching user:", err) // Логирование ошибки
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Сравниваем хешированный пароль с переданным
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		fmt.Println("Password mismatch:", err) // Логирование ошибки
+	if err := CheckPassword(hashedPassword, req.Password); err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
-	// Генерируем JWT токен
-	token, err := a.generateJWT(user)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(h.cfg.TokenExpiry).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(h.cfg.JwtSecretKey))
 	if err != nil {
-		fmt.Println("Error generating JWT:", err) // Логирование ошибки
-		http.Error(w, "Error generating token", http.StatusInternalServerError)
+		http.Error(w, "Error creating token", http.StatusInternalServerError)
 		return
 	}
 
-	// Возвращаем токен в ответе
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
-}
-
-// Генерация JWT токена
-func (a *AuthService) generateJWT(user *models.Users) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": user.ID,
-		"email":   user.Email,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(), // Срок действия 24 часа
-		"iat":     time.Now().Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(a.Secret))
+	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }

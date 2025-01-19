@@ -3,22 +3,17 @@ definitions:
   auth.LoginRequest:
     properties:
       email:
-        example: user@example.com
         type: string
       password:
-        example: securepassword
         type: string
     type: object
   auth.RegisterRequest:
     properties:
       email:
-        example: user@example.com
         type: string
       password:
-        example: securepassword
         type: string
       username:
-        example: john_doe
         type: string
     type: object
   models.News:
@@ -48,8 +43,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticates a user with email and password and returns a JWT
-        token
+      description: Authenticates the user and returns a JWT token upon successful
+        login.
       parameters:
       - description: User login data
         in: body
@@ -61,29 +56,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: JWT token
+          description: token
           schema:
             additionalProperties:
               type: string
             type: object
         "400":
-          description: Invalid request body or missing fields
+          description: Invalid input
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
         "401":
           description: Invalid email or password
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
         "500":
-          description: Internal server error
+          description: Database error or error creating token
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
       summary: Login a user
       tags:
       - auth
@@ -91,7 +80,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new user account with provided email, username, and password
+      description: Creates a new user account with the provided email, username, and
+        password.
       parameters:
       - description: User registration data
         in: body
@@ -100,31 +90,20 @@ paths:
         schema:
           $ref: '#/definitions/auth.RegisterRequest'
       produces:
-      - application/json
+      - text/plain
       responses:
-        "200":
-          description: User registered successfully
+        "201":
+          description: User created successfully
           schema:
-            additionalProperties: true
-            type: object
+            type: string
         "400":
-          description: Invalid request body or missing fields
+          description: Invalid input
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Email or username already exists
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
         "500":
-          description: Internal server error
+          description: Error hashing password or creating user
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
       summary: Register a new user
       tags:
       - auth

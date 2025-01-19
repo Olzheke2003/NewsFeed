@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
-                "description": "Authenticates a user with email and password and returns a JWT token",
+                "description": "Authenticates the user and returns a JWT token upon successful login.",
                 "consumes": [
                     "application/json"
                 ],
@@ -50,7 +50,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "JWT token",
+                        "description": "token",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -59,30 +59,21 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or missing fields",
+                        "description": "Invalid input",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "type": "string"
                         }
                     },
                     "401": {
                         "description": "Invalid email or password",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Database error or error creating token",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "type": "string"
                         }
                     }
                 }
@@ -90,12 +81,12 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Creates a new user account with provided email, username, and password",
+                "description": "Creates a new user account with the provided email, username, and password.",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
-                    "application/json"
+                    "text/plain"
                 ],
                 "tags": [
                     "auth"
@@ -113,38 +104,22 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "User registered successfully",
+                    "201": {
+                        "description": "User created successfully",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or missing fields",
+                        "description": "Invalid input",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Email or username already exists",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Error hashing password or creating user",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "type": "string"
                         }
                     }
                 }
@@ -250,12 +225,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                    "type": "string"
                 },
                 "password": {
-                    "type": "string",
-                    "example": "securepassword"
+                    "type": "string"
                 }
             }
         },
@@ -263,16 +236,13 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                    "type": "string"
                 },
                 "password": {
-                    "type": "string",
-                    "example": "securepassword"
+                    "type": "string"
                 },
                 "username": {
-                    "type": "string",
-                    "example": "john_doe"
+                    "type": "string"
                 }
             }
         },
