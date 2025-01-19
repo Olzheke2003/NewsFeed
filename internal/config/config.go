@@ -14,6 +14,7 @@ type ServerConfig struct {
 	BindAddr    string `yaml:"bindAddr"`
 	LogLevel    string `yaml:"logLevel"`
 	DatabaseURL string `yaml:"databaseURL"`
+	JWTSecret   string `yaml:"JWTSecret"`
 }
 
 func New(configFilePath string) *ServerConfig {
@@ -31,6 +32,7 @@ func New(configFilePath string) *ServerConfig {
 	cfg.BindAddr = getEnv("BIND_ADDR", cfg.BindAddr)
 	cfg.LogLevel = getEnv("LOG_LEVEL", cfg.LogLevel)
 	cfg.DatabaseURL = getEnv("DATABASE_URL", cfg.DatabaseURL)
+	cfg.JWTSecret = getEnv("DATABASE_URL", cfg.JWTSecret)
 
 	return cfg
 }
