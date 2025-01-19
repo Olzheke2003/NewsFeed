@@ -64,6 +64,6 @@ func (s *Server) setupRoutes(db *sql.DB) {
 	s.router.HandleFunc("/news/comments", newsHandler.GetNewsWithCommentsHandler).Methods("GET")
 	s.router.HandleFunc("/news/{id}", newsHandler.GetNewsHandler).Methods("GET")
 	s.router.HandleFunc("/auth/register", authService.Register).Methods("POST")
-	s.router.HandleFunc("/auth/register", authService.Login).Methods("POST")
+	s.router.HandleFunc("/auth/login", authService.Login).Methods("POST")
 	s.router.HandleFunc("/swagger/{any:.*}", httpSwagger.WrapHandler) // Путь для Swagger UI
 }

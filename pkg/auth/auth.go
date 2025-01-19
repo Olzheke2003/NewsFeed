@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -60,6 +61,7 @@ func (a *AuthService) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Декодируем запрос
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Println("Error decoding request:", err) // Логирование ошибки
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -137,12 +139,14 @@ func (a *AuthService) Login(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 			return
 		}
+		fmt.Println("Error fetching user:", err) // Логирование ошибкиPrintln("Error fetching user:", err) // Логирование ошибки
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	// Сравниваем хешированный пароль с переданным
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		fmt.Println("Password mismatch:", err) // Логирование ошибки
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
@@ -150,6 +154,7 @@ func (a *AuthService) Login(w http.ResponseWriter, r *http.Request) {
 	// Генерируем JWT токен
 	token, err := a.generateJWT(user)
 	if err != nil {
+		fmt.Println("Error generating JWT:", err) // Логирование ошибки
 		http.Error(w, "Error generating token", http.StatusInternalServerError)
 		return
 	}
