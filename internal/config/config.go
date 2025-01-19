@@ -8,6 +8,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var SecretKey = []byte("your-secret-key")
+
 type ServerConfig struct {
 	BindAddr    string `yaml:"bindAddr"`
 	LogLevel    string `yaml:"logLevel"`
