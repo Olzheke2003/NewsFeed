@@ -1,6 +1,8 @@
 package services
 
 import (
+	"log"
+
 	database "github.com/Olzheke2003/NewsFeed/internal/database/NewsRepository"
 	"github.com/Olzheke2003/NewsFeed/internal/models"
 )
@@ -29,4 +31,13 @@ func (s *NewsService) GetNews_ID(news_id int) (models.News_id, error) {
 		return news, err
 	}
 	return news, nil
+}
+
+func (s *NewsService) DeleteNewsService(news_id int) error {
+	news := s.repo.DeleteNews(news_id)
+	if news != nil {
+		log.Printf("Error")
+		return news
+	}
+	return nil
 }

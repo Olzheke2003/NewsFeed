@@ -2,7 +2,9 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/Olzheke2003/NewsFeed/internal/models"
 )
@@ -18,7 +20,7 @@ func NewNewsRepository(db *sql.DB) *NewsRepository {
 // Получить все новости
 func (r *NewsRepository) GetAllNews() ([]models.News, error) {
 	rows, err := r.DB.Query(`
-		SELECT n.title, n.created_at, n.image, COUNT(c.id) AS comments_count
+		SELECT n.title, n.image, COUNT(c.id) AS comments_count
 		FROM news n
 		LEFT JOIN 
 			comments c ON n.id = c.news_id
@@ -35,7 +37,7 @@ func (r *NewsRepository) GetAllNews() ([]models.News, error) {
 	var news []models.News
 	for rows.Next() {
 		var n models.News
-		if err := rows.Scan(&n.Title, &n.CreatedAt, &n.Image, &n.CommentsCount); err != nil {
+		if err := rows.Scan(&n.Title, &n.Image, &n.CommentsCount); err != nil {
 			return nil, err
 		}
 		news = append(news, n)
@@ -45,14 +47,56 @@ func (r *NewsRepository) GetAllNews() ([]models.News, error) {
 
 func (r *NewsRepository) GetNews(newsID int) (models.News_id, error) {
 	var news models.News_id
-	err := r.DB.QueryRow("SELECT id, title, created_at, content, image FROM news WHERE id = $1", newsID).
-		Scan(&news.ID, &news.Title, &news.CreatedAt, &news.Content, &news.Image)
+
+	// Запрос для получения новости с комментариями в формате JSON
+	rows, err := r.DB.Query(`
+        SELECT
+            n.id,
+            n.title,
+            n.content,
+            n.image,
+            json_agg(
+                json_build_object(
+                    'content', c.content
+                )
+            ) AS comments
+        FROM news n
+        LEFT JOIN comments c ON n.id = c.news_id
+        WHERE n.id = $1
+        GROUP BY n.id
+    `, newsID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return models.News_id{}, fmt.Errorf("news with id %d not found", newsID)
-		}
+		log.Printf("Failed to execute query for newsID %d: %v", newsID, err)
 		return models.News_id{}, err
 	}
+	defer rows.Close()
+
+	// Чтение результата
+	if rows.Next() {
+		var commentsJSON []byte // Тип для хранения JSON данных
+		err := rows.Scan(&news.ID, &news.Title, &news.Content, &news.Image, &commentsJSON)
+		if err != nil {
+			log.Printf("Failed to scan news data for newsID %d: %v", newsID, err)
+			return models.News_id{}, err
+		}
+
+		// Распарсим JSON в структуру Comment
+		err = json.Unmarshal(commentsJSON, &news.Comments)
+		if err != nil {
+			log.Printf("Failed to unmarshal comments JSON for newsID %d: %v", newsID, err)
+			return models.News_id{}, err
+		}
+	} else {
+		log.Printf("No news found for newsID %d", newsID)
+		return models.News_id{}, fmt.Errorf("news with id %d not found", newsID)
+	}
+
+	// Проверка на ошибки после завершения итерации
+	if err := rows.Err(); err != nil {
+		log.Printf("Error iterating rows for newsID %d: %v", newsID, err)
+		return models.News_id{}, err
+	}
+
 	return news, nil
 }
 

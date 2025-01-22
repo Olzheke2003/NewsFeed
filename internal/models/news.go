@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 // type Like struct {
 // 	ID         int       `json:"id"`
 // 	UserID     int       `json:"user_id"`     // ID пользователя, который поставил лайк
@@ -16,18 +14,21 @@ type Category struct {
 }
 
 type News struct {
-	Title         string    `json:"title"`
-	CreatedAt     time.Time `json:"created_at"`
-	Image         string    `json:"image"`
-	CommentsCount int       `json:"comments_count"`
+	Title         string `json:"title"`
+	Image         string `json:"image"`
+	CommentsCount int    `json:"comments_count"`
 }
 
 type News_id struct {
-	ID        int       `json:"id"`
-	Title     string    `json:"title"`
-	CreatedAt time.Time `json:"created_at"`
-	Content   string    `json:"content"`
-	Image     string    `json:"image"`
+	ID       int       `json:"id"`
+	Title    string    `json:"title"`
+	Content  string    `json:"content"`
+	Image    string    `json:"image"`
+	Comments []Comment `json:"comments"` // Массив комментариев
+}
+
+type Comment struct {
+	Content string `json:"content"`
 }
 
 type Comments struct {
@@ -38,4 +39,13 @@ type Comments struct {
 	Content  string     `json:"content"`
 	DatePost string     `json:"date_post"`
 	Replies  []Comments `json:"replies"`
+}
+
+type DeleteNews struct {
+	ID int `json:"id"`
+}
+
+// ErrorResponse описывает структуру для ошибок API
+type ErrorResponse struct {
+	Error string `json:"error"`
 }

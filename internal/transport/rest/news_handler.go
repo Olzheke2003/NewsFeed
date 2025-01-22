@@ -78,3 +78,31 @@ func (h *NewsHandler) GetNewsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(news)
 }
+
+// DeleteNews godoc
+// @Summary Delete a news article
+// @Description Delete a news article by ID
+// @Tags news
+// @Accept  json
+// @Produce  json
+// @Param id path int true "News ID"
+// @Success 200 {string} string "GOOD DELETE"
+// @Failure 400 {object} models.ErrorResponse "Invalid news ID"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /news/{id} [delete]
+func (h *NewsHandler) DeleteNews(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	newsIDParam := vars["id"]
+	newsID, err := strconv.Atoi(newsIDParam)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid news ID"}`, http.StatusBadRequest)
+		return
+	}
+	if h.service.DeleteNewsService(newsID) != nil {
+		http.Error(w, `{"error": "Failed to delete news"}`, http.StatusBadRequest)
+		return
+	} else {
+		http.Error(w, `"GOOD DELETE"`, http.StatusOK)
+		return
+	}
+}

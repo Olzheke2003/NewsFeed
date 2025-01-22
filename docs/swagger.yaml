@@ -16,10 +16,15 @@ definitions:
       username:
         type: string
     type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
   models.News:
     properties:
-      created_at:
-        type: string
+      comments_count:
+        type: integer
       image:
         type: string
       title:
@@ -108,6 +113,34 @@ paths:
       tags:
       - auth
   /news/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a news article by ID
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: GOOD DELETE
+          schema:
+            type: string
+        "400":
+          description: Invalid news ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Delete a news article
+      tags:
+      - news
     get:
       consumes:
       - application/json
