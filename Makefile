@@ -11,4 +11,4 @@ test:
 
 .PHONY: migrate
 migrate:
-	migrate -database "postgres://myuser:mypassword@localhost:5432/mydatabase?sslmode=disable" -path ./migrations up
+	migrate -database "postgres://postgres:admin@localhost:5432/news_feed?sslmode=disable" -path ./migrations up
