@@ -14,24 +14,13 @@ func NewNewsService(repo *database.NewsRepository) *NewsService {
 }
 
 // Получить все новости с количеством комментариев
-func (s *NewsService) GetNewsWithComments() ([]models.NewsWithComments, error) {
+func (s *NewsService) GetNewsWithComments() ([]models.News, error) {
 	news, err := s.repo.GetAllNews()
 	if err != nil {
 		return nil, err
 	}
 
-	var result []models.NewsWithComments
-	for _, n := range news {
-		count, err := s.repo.CountComments(n.Title)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, models.NewsWithComments{
-			News:          n,
-			CommentsCount: count,
-		})
-	}
-	return result, nil
+	return news, nil
 }
 
 func (s *NewsService) GetNews_ID(news_id int) (models.News_id, error) {

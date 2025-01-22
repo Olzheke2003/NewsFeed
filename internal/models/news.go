@@ -16,9 +16,10 @@ type Category struct {
 }
 
 type News struct {
-	Title     string    `json:"title"`
-	CreatedAt time.Time `json:"created_at"`
-	Image     string    `json:"image"`
+	Title         string    `json:"title"`
+	CreatedAt     time.Time `json:"created_at"`
+	Image         string    `json:"image"`
+	CommentsCount int       `json:"comments_count"`
 }
 
 type News_id struct {

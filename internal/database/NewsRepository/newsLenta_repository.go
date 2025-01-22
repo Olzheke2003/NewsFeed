@@ -17,7 +17,16 @@ func NewNewsRepository(db *sql.DB) *NewsRepository {
 
 // Получить все новости
 func (r *NewsRepository) GetAllNews() ([]models.News, error) {
-	rows, err := r.DB.Query("SELECT title, created_at, image FROM news")
+	rows, err := r.DB.Query(`
+		SELECT n.title, n.created_at, n.image, COUNT(c.id) AS comments_count
+		FROM news n
+		LEFT JOIN 
+			comments c ON n.id = c.news_id
+		GROUP BY 
+			n.id
+		ORDER BY 
+			n.created_at DESC
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +35,7 @@ func (r *NewsRepository) GetAllNews() ([]models.News, error) {
 	var news []models.News
 	for rows.Next() {
 		var n models.News
-		if err := rows.Scan(&n.Title, &n.CreatedAt, &n.Image); err != nil {
+		if err := rows.Scan(&n.Title, &n.CreatedAt, &n.Image, &n.CommentsCount); err != nil {
 			return nil, err
 		}
 		news = append(news, n)
@@ -45,16 +54,6 @@ func (r *NewsRepository) GetNews(newsID int) (models.News_id, error) {
 		return models.News_id{}, err
 	}
 	return news, nil
-}
-
-// Подсчитать количество комментариев для новости
-func (r *NewsRepository) CountComments(Title string) (int, error) {
-	var count int
-	err := r.DB.QueryRow("SELECT COUNT(*) FROM comments WHERE news_id = (SELECT id FROM news WHERE title = $1)", Title).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
 }
 
 // Удалить новость по ID
