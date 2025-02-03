@@ -1,4 +1,4 @@
-bindAddr: :8080
+bindAddr: :8081
 logLevel: debug
 databaseURL: "postgres://postgres:admin@localhost:5432/news_feed?sslmode=disable"
 JWTSecret: "qweqweqweasdasdasd"
