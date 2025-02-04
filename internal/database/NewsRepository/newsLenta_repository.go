@@ -118,3 +118,22 @@ func (r *NewsRepository) DeleteNews(newsID int) error {
 
 	return nil
 }
+
+func (r *NewsRepository) UpdateNews(newsID int, title, content, image string) error {
+	query := "UPDATE news SET title = $1, content = $2, image = $3 WHERE id = $4"
+	result, err := r.DB.Exec(query, title, content, image, newsID)
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении новости: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("ошибка при получении количества изменённых строк: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("новость с id %d не найдена", newsID)
+	}
+
+	return nil
+}

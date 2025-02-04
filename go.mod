@@ -1,6 +1,6 @@
 module github.com/Olzheke2003/NewsFeed
 
-go 1.23
+go 1.22.3
 
 require (
 	github.com/golang-jwt/jwt/v4 v4.5.1

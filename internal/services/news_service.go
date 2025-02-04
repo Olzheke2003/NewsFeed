@@ -41,3 +41,13 @@ func (s *NewsService) DeleteNewsService(news_id int) error {
 	}
 	return nil
 }
+
+
+func (s *NewsService) UpdateNewsService(newsID int, title string, content string, image string) error {
+	news := s.repo.UpdateNews(newsID, title, content, image)
+	if news != nil {
+		log.Printf("Error")
+		return news
+	}
+	return nil
+}

@@ -30,6 +30,15 @@ definitions:
       title:
         type: string
     type: object
+  transport.NewsUpdateRequest:
+    properties:
+      content:
+        type: string
+      image:
+        type: string
+      title:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -177,6 +186,50 @@ paths:
               type: string
             type: object
       summary: Get news by ID
+      tags:
+      - news
+    put:
+      consumes:
+      - application/json
+      description: Update the title, content, and image of a news article
+      parameters:
+      - description: News ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated news data
+        in: body
+        name: news
+        required: true
+        schema:
+          $ref: '#/definitions/transport.NewsUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: News updated successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: News not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a news article
       tags:
       - news
   /news/comments:

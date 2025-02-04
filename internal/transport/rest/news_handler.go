@@ -6,10 +6,16 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-
+	
 	"github.com/Olzheke2003/NewsFeed/internal/services"
 	"github.com/gorilla/mux"
 )
+
+type NewsUpdateRequest struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+	Image   string `json:"image"`
+}
 
 type NewsHandler struct {
 	service *services.NewsService
@@ -106,3 +112,52 @@ func (h *NewsHandler) DeleteNews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+
+
+// UpdateNews godoc
+// @Summary Update a news article
+// @Description Update the title, content, and image of a news article
+// @Tags news
+// @Accept json
+// @Produce json
+// @Param id path int true "News ID"
+// @Param news body NewsUpdateRequest true "Updated news data"
+// @Success 200 {string} string "News updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request data"
+// @Failure 404 {object} map[string]string "News not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /news/{id} [put]
+func (h *NewsHandler) UpdateNews(w http.ResponseWriter, r *http.Request) {
+	// Получаем ID новости из URL
+	vars := mux.Vars(r)
+	newsIDParam := vars["id"]
+	newsID, err := strconv.Atoi(newsIDParam)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid news ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Декодируем тело запроса
+	var req NewsUpdateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Вызываем сервис обновления
+	err = h.service.UpdateNewsService(newsID, req.Title, req.Content, req.Image)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, `{"error": "News not found"}`, http.StatusNotFound)
+			return
+		}
+		http.Error(w, `{"error": "Failed to update news"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Возвращаем успешный ответ
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("News updated successfully"))
+}
+
